@@ -1,0 +1,111 @@
+MODEL_NAME: "QCaps"
+
+
+CAPSNET:
+    CONTENT:
+        FEATURE_IN_C: 2048
+        SPATIAL_IN_C: 196
+        FEATURE_IN_DIM: 49
+        SPATIAL_IN_DIM: 1024
+        SPATIAL_OUT_DIM: 8
+        FEATURE_OUT_DIM: 8
+        NUM: 16
+        LEARNABLE: True
+
+SOLVER:
+    # KIQ
+    # BASE_LR: 0.08
+    # # BASE_LR: 0.1
+    # WEIGHT_DECAY: 0.0001
+    # BATCH_SIZE: 256
+    # EPOCH: 16
+    # LR_DECAY_STEP_SIZE: 4
+    # LR_DECAY_RATIO: 0.5
+    # TRAIN_TEST_LOOP: 1
+
+    # LIVEC
+    # BASE_LR: 0.05
+    # WEIGHT_DECAY: 0.0001
+    # BATCH_SIZE: 256
+    # EPOCH: 16
+    # LR_DECAY_STEP_SIZE: 4
+    # LR_DECAY_RATIO: 0.5
+    # TRAIN_TEST_LOOP: 10
+    # BASE_LR: 0.15
+    # WEIGHT_DECAY: 0.0001
+    # BATCH_SIZE: 256
+    # EPOCH: 16
+    # LR_DECAY_STEP_SIZE: 4
+    # LR_DECAY_RATIO: 0.5
+    # TRAIN_TEST_LOOP: 1
+
+
+    # LIVE
+    # BASE_LR: 0.3
+    # WEIGHT_DECAY: 0.0001
+    # BATCH_SIZE: 256
+    # EPOCH: 16
+    # LR_DECAY_STEP_SIZE: 4
+    # LR_DECAY_RATIO: 0.5
+    # TRAIN_TEST_LOOP: 1
+    # BASE_LR: 0.05
+    # WEIGHT_DECAY: 0.0001
+    # BATCH_SIZE: 256
+    # EPOCH: 16
+    # LR_DECAY_STEP_SIZE: 5
+    # LR_DECAY_RATIO: 0.5
+    # TRAIN_TEST_LOOP: 1
+
+    # SPAQ
+    BASE_LR: 0.08
+    WEIGHT_DECAY: 0.0001
+    BATCH_SIZE: 256
+    EPOCH: 16
+    LR_DECAY_STEP_SIZE: 4
+    LR_DECAY_RATIO: 0.5
+    TRAIN_TEST_LOOP: 1
+
+
+    # TID2013
+    # BASE_LR: 0.16
+    # WEIGHT_DECAY: 0.0001
+    # BATCH_SIZE: 256
+    # EPOCH: 16
+    # LR_DECAY_STEP_SIZE: 4
+    # LR_DECAY_RATIO: 0.5
+    # TRAIN_TEST_LOOP: 1
+
+
+LOGFILE:
+    NAME: "QCaps"
+    CAPTION: "num=16"
+    SAVENAME: "ckpt.pt"
+
+DATASET:
+    LIVE:
+        NAME: "LIVE"
+        PATH: "/home/liuxiaolong/dataset/IQA/live/databaserelease2/"
+        SCALE: 0.01
+    LIVEC:
+        NAME: "LIVEC"
+        PATH: "/home/liuxiaolong/dataset/IQA/livec/ChallengeDB_release/"
+        SCALE: 0.01
+    TID2013:
+        NAME: "TID2013"
+        PATH: "/home/liuxiaolong/dataset/IQA/tid2013/"
+        SCALE: 0.1
+    KONIQ:
+        NAME: "KonIQ-10K"
+        PATH: "/home/liuxiaolong/dataset/IQA/koniq-10k/"
+        SCALE: 0.01
+    KADID:
+        NAME: "Kadid-10K"
+        PATH: "/home/liuxiaolong/dataset/IQA/kadid-10k/kadid10k"
+        SCALE: 0.2
+    SPAQ:
+        NAME: "SPAQ"
+        PATH: "/home/liuxiaolong/dataset/IQA/spaq/"
+        SCALE: 0.01
+    PATCH_SIZE: 224
+    AUGMENTATION: 25
+
