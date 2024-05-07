@@ -19,7 +19,6 @@ def squash(inputs, axis=-1):
 class Squash(nn.Module):
     """
     learnable squash(to make length in [0, 1])
-
     Attributes:
     axis: (int) the squash dim
     lmd: (float) the learnable option
@@ -27,19 +26,17 @@ class Squash(nn.Module):
 
     Input:
     capsules (shape like [batch, caps_num, caps_dim])
-
-
     Output:
     capsules (shape like [batch, caps_num, caps_dim])
     """
-    def __init__(self, axis=-1, lmd=1, learnable=False):
+    def __init__(self, axis=-1, lmd=1, learnable=True):
         super().__init__()
         self.learnable = learnable
         self.axis = axis
         if learnable == True:
-            self.fc = nn.Linear(8, 1)
+            self.fc = nn.Linear(16, 1)
+            #self.relu = nn.ReLU()
             self.sigmoid = nn.Sigmoid()
-
     def forward(self, x):
         if self.learnable:
             lmd = self.sigmoid(self.fc(x))
@@ -49,7 +46,6 @@ class Squash(nn.Module):
         norm = torch.norm(x, p=2, dim=self.axis, keepdim=True)
         scale = norm / (lmd + norm ** 2)
         return scale * x
-
 
 class Affine(nn.Module):
     """
