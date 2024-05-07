@@ -39,6 +39,9 @@ class MixerCaps(nn.Module):
     def forward(self, x):
         out = self.resnet(x)
         pred = self.content([out[2], out[3]])
-
+        #pred,dis = self.content([out[2],out[3]])
+        # if cfg.CAPSNET.IF_CLASSIFICATION:
+        #     return pred, dis
         return pred
+        #return pred,dis
 
