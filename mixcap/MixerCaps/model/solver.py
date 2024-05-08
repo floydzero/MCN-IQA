@@ -8,14 +8,16 @@ import scipy.stats as stats
 import numpy as np
 import logging
 import math
+import time
+from time import *
+import torch.nn.functional as F
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0,1,2,3'
 
 
 class Sovler:
     def __init__(self, dataset, idx):
-        self.model = nn.DataParallel(QCaps())
-        self.model = self.model.cuda()
+        self.model = nn.DataParallel(MixerCaps()).cuda()
 
         self.smooth_l1_loss = nn.SmoothL1Loss().cuda()
         self.cross_entropy_loss = nn.CrossEntropyLoss().cuda()
@@ -25,22 +27,25 @@ class Sovler:
         self.train_loader, self.test_loader = self.loader.get()
         if self.dataset == "LIVE":
             self.scale = cfg.DATASET.LIVE.SCALE
-            self.save_dir = '/home/liuxiaolong/IQA/QCaps/log/checkpoint/live'
+            self.save_dir = '/home/long/IQA/MixerCaps/log/checkpoint/live'
         elif self.dataset == "LIVEC":
             self.scale = cfg.DATASET.LIVEC.SCALE
-            self.save_dir = '/home/liuxiaolong/IQA/QCaps/log/checkpoint/livec'
+            self.save_dir = '/home/long/IQA/MixerCaps/log/checkpoint/livec'
         elif self.dataset == "TID2013":
             self.scale = cfg.DATASET.TID2013.SCALE
-            self.save_dir = '/home/liuxiaolong/IQA/QCaps/log/checkpoint/tid2013'
+            self.save_dir = '/home/long/IQA/MixerCaps/log/checkpoint/tid2013'
         elif self.dataset == "KonIQ-10K":
             self.scale = cfg.DATASET.KONIQ.SCALE
-            self.save_dir = '/home/liuxiaolong/IQA/QCaps/log/checkpoint/koniq'
+            self.save_dir = '/home/long/IQA/MixerCaps/log/checkpoint/koniq'
         elif self.dataset == "KADID-10K":
             self.scale = cfg.DATASET.KADID.SCALE
-            self.save_dir = '/home/liuxiaolong/IQA/QCaps/log/checkpoint/kadid'
+            self.save_dir = '/home/long/IQA/MixerCaps/log/checkpoint/kadid'
         elif self.dataset == 'SPAQ':
             self.scale = cfg.DATASET.SPAQ.SCALE
-            self.save_dir = '/home/liuxiaolong/IQA/QCaps/log/checkpoint/spaq'
+            self.save_dir = '/home/long/IQA/MixerCaps/log/checkpoint/spaq'
+        elif self.dataset == 'PaQ2PaQ':
+            self.scale = cfg.DATASET.PaQ2PaQ.SCALE
+            self.save_dir = '/home/long/IQA/MixerCaps/log/checkpoint/paq2paq'
         
         self.savename = cfg.LOGFILE.SAVENAME
         self.epoch = cfg.SOLVER.EPOCH
@@ -114,12 +119,14 @@ class Sovler:
                 score_label = data[1] * self.scale
                 # score_label = data[1]
                 score_label = score_label.cuda()
-
+                #MCN-C if dataset is synthetic
+                #if cfg.CAPSNET.IF_CLASSIFICATION:
+                #    class_label = data[2].cuda()
                 self.optimizer.zero_grad()
 
                 y_pred = self.model(x)
 
-                y_pred = y_pred.squeeze()
+                y_pred = y_pred.squeeze(0)
                 pred_scores = pred_scores + y_pred.cpu().tolist()
                 gt_scores = gt_scores + score_label.cpu().tolist()
 
@@ -143,6 +150,7 @@ class Sovler:
             logging.info('%d\t\t%4.3f\t\t%4.3f\t\t%4.4f\t\t%4.4f' % (
                 t + 1, sum(epoch_loss) / len(epoch_loss), train_srcc, test_srcc, test_plcc))
             save_dir = os.path.join(self.save_dir, str(train_num))
+            # save model
             if not os.path.exists(save_dir):
                 os.makedirs(save_dir)
             if test_srcc == best_srcc:
@@ -172,14 +180,12 @@ class Sovler:
             label = label.cuda()
 
             y_pred = self.model(img)
-
             y_pred = y_pred.squeeze()
 
             loss = self.smooth_l1_loss(y_pred, label)
             all_loss.append(loss.item())
             pred_scores = pred_scores + y_pred.cpu().tolist()
             gt_scores = gt_scores + label.cpu().tolist()
-
 
 
         pred_scores = np.mean(np.reshape(np.array(pred_scores), (-1, cfg.DATASET.AUGMENTATION)), axis=1)
