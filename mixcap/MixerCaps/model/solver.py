@@ -129,7 +129,10 @@ class Sovler:
                 y_pred = y_pred.squeeze(0)
                 pred_scores = pred_scores + y_pred.cpu().tolist()
                 gt_scores = gt_scores + score_label.cpu().tolist()
-
+                # MCN-C if dataset is synthetic
+                #if cfg.CAPSNET.IF_CLASSIFICATION:
+                #    loss_ce = self.cross_entropy_loss(dis, class_label)
+                #loss = 0.9*self.smooth_l1_loss(y_pred, score_label) + loss_ce
                 loss = self.smooth_l1_loss(y_pred, score_label)
 
                 iteration = t * len(self.train_loader) + i
