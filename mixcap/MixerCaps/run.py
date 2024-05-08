@@ -1,4 +1,4 @@
-1 from model.solver import *
+from model.solver import *
 from config import cfg
 import numpy as np
 import torch
@@ -20,8 +20,9 @@ def main():
     # dataset = "LIVE"
     # dataset = 'TID2013'
     # dataset = 'KADID-10K'
+    # dataset = 'PaQ2PaQ'
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s',
-                        filename='/home/liuxiaolong/IQA/MixerCaps/log/logfile/param_%s_%s.log' % (cfg.LOGFILE.NAME, dataset))
+                        filename='/home/long/IQA/MixerCaps/log/logfile/param_%s_%s.log' % (cfg.LOGFILE.NAME, dataset))
     logging.info("FIX: %s" % cfg.LOGFILE.CAPTION)
     for i in range(loop_num):
         if dataset == 'SPAQ':
@@ -30,13 +31,18 @@ def main():
             idx = list(range(0, 10073))
         if dataset == 'LIVEC':
             idx = list(range(0, 1162))
+        if dataset == 'PaQ2PaQ':
+            idx = list(range(0, 39807))
         if dataset == 'LIVE':
             idx = list(range(0, 29))
         if dataset == 'TID2013':
             idx = list(range(0, 25))
+        if dataset == 'KADID-10K':
+            idx = list(range(0, 81))
         random.shuffle(idx)
         solver = Sovler(dataset=dataset, idx=idx)
         srcc_all[i], plcc_all[i] = solver.train(train_num=i + 1)
+        # Draw loss
         # logs, losses = solver.find_lr()
         # plt.plot(logs[10:-5], losses[10:-5])
         # plt.savefig('./lr.jpg')
