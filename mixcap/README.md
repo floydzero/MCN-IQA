@@ -1,3 +1,3 @@
 # MixCap
-This is the main code of MCN.
+This is the main code for MCN.
 
