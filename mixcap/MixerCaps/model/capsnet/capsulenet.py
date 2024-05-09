@@ -8,6 +8,10 @@ import os
 import torch.nn.functional as F
 from einops.layers.torch import Rearrange
 
+"""
+Code for the main structure of the network
+
+"""
 
 def squash(inputs, axis=-1):
     """
