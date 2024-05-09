@@ -5,7 +5,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from PIL import Image
+from matplotlib import cm
  
+#The path of the image to be visualized
 
 img_161 = Image.open('img/161.bmp').convert('RGB')
 v_161 = torch.load('./161_v.tensor').norm(dim=-1).squeeze().cpu().detach().numpy()
@@ -32,30 +34,31 @@ v_2 = torch.load('./2_v.tensor').norm(dim=-1).squeeze().cpu().detach().numpy()
 max_2 = v_2[6].reshape(14, 14)
 min_2 = v_2[3].reshape(14, 14)
 
-
+"""
+Visualization code using another color (jet) of the heatmaps.
+"""
+# plt.subplot(4, 4, 1)
+# e = plt.imshow(sim_30, cm.jet,interpolation='bilinear')
+# plt.xticks([])  
+# plt.yticks([])
 
 plt.subplot(3, 5, 1)
-# plt.text(0, 80, '0.5549', fontsize=6) # livec
 plt.text(0, 80, '0.7920', fontsize=6) # spaq
 plt.imshow(img_471)
 
 plt.subplot(3, 5, 2)
-# plt.text(0, 80, '0.4024', fontsize=6) # livec
 plt.text(0, 80, '0.4684', fontsize=6) # spaq
 plt.imshow(img_156)
 
 plt.subplot(3, 5, 3)
-# plt.text(0, 80, '0.1360', fontsize=6) # livec
 plt.text(0, 80, '0.3449', fontsize=6) # spaq
 plt.imshow(img_161)
 
 plt.subplot(3, 5, 4)
-# plt.text(0, 80, '0.4186', fontsize=6) # livec
 plt.text(0, 80, '0.5550', fontsize=6) # spaq
 plt.imshow(img_1)
 
 plt.subplot(3, 5, 5)
-# plt.text(0, 80, '0.7141', fontsize=6) # livec
 plt.text(0, 80, '0.8687', fontsize=6) # spaq
 plt.imshow(img_2)
 
@@ -90,5 +93,5 @@ plt.subplot(3, 5, 15)
 c = plt.imshow(min_2, cmap='viridis')
 
 
-plt.savefig('pretrained_on_spaq_with_8_caps.png', dpi = 300)
+plt.savefig('files/pretrained_on_spaq_with_16_caps.png', dpi = 300)
 plt.close()
