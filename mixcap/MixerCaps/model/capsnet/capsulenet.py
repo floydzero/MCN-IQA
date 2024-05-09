@@ -48,10 +48,26 @@ class Squash(nn.Module):
         norm = torch.norm(x, p=2, dim=self.axis, keepdim=True)
         scale = norm / (lmd + norm ** 2)
         return scale * x
-
+class LRquash(nn.Module):
+    def __init__(self, axis=-1, lmd=1, learnable=True):
+        super().__init__()
+        self.learnable = learnable
+        self.axis = axis
+        if learnable == True:
+            self.fc = nn.Linear(196, 1)
+            self.sigmoid = nn.Sigmoid()
+    def forward(self, x):
+        if self.learnable:
+            lmd = self.sigmoid(self.fc(x))
+        else:
+            lmd = 1
+        norm = torch.norm(x, p=2, dim=self.axis, keepdim=True)
+        scale = norm / (lmd + norm ** 2)
+        return scale * x
+        
 class Affine(nn.Module):
     """
-    FC to replace routing
+    FC to replace routing in QLR
 
     Attributes:
     num: (int) the number of group capsules
@@ -74,39 +90,99 @@ class Affine(nn.Module):
         x = x.view(x.size(0), -1, self.in_dim)
         out = torch.einsum('b c d, o d n -> b o c n', [x, self.w])
         return out
+        
+class Affines(nn.Module):
+    """
+    FC to replace routing in QDR
 
-# class ATR(nn.Module):
-#     """
-#     secondary layer of all capsnet
+    Attributes:
+    num: (int) the number of group capsules
+    in_dim: (int) the input dim
+    out-dim: (int) the output dim
 
-#     Attributes:
-#     num: (int) group number
-#     in_c: (int) channels of input feature
-#     in_dim: (int) dim of intput feature
-#     out_dim: (int) dim of output capsules
-#     learnable: (bool) if learnable in squash
+    Input:
+    capsules: (shape like [batch, caps_num, caps_dim])
 
-#     Input:
-#     primary capusles (shape like [batch, in_caps_num, in_caps_dim])
+    Output:
+    group capsules: (shape like [batch, num, caps_num, caps_dim])
+    """
+    def __init__(self, in_dim, out_dim,in_c):
+        super().__init__()
+        self.in_dim = in_dim
+        self.w = nn.Parameter(torch.randn(in_dim, out_dim))
+        init.xavier_uniform_(self.w)
+        self.in_c =in_c
+    def forward(self, x):
+        x = x.view(x.size(0), self.in_c, self.in_dim)
+        out = torch.einsum('b c d, d n -> b c n', [x, self.w])
+        return out
+        
+class ATR_QLR(nn.Module):
+    def __init__(self, num, in_c, in_dim, out_dim,num_c, learnable):
+        super().__init__()
 
-#     Output:
-#     secondary capsules (shape like [batch, num, out_caps_dim])
-#     """
-#     def __init__(self, num, in_c, in_dim, out_dim, leaxiernable):
-#         super().__init__()
+        self.in_c = in_c
+        self.squash_primary = Squash(learnable=True)
+        self.squash_secondary = Squash(learnable=True)
+        self.squash_s = LRquash(learnable=True)
 
-#         self.in_c = in_c
-#         self.squash = Squash(axis=-1, learnable=learnable) # fixme: should be different 2 squash
+        self.assi = nn.Conv2d(1024, 1024, 3, stride=2, padding=1)
+        self.upsam = nn.UpsamplingNearest2d(scale_factor=2)
 
-#         self.v = Affine(num=num, in_dim=in_dim, out_dim=out_dim)
-#         self.mask = nn.Parameter(F.softmax(torch.ones(num, num, self.in_c), dim=0), requires_grad=False)
+        self.v = Affine(num=num, in_dim=in_dim, out_dim=out_dim, in_c=in_c)
+        self.mask = nn.Parameter(F.softmax(torch.ones(num, num, self.in_c), dim=0), requires_grad=False)
 
-#     def forward(self, x):
-#         v = self.squash(self.v(x))
-#         out = torch.einsum('c c n, b c n d -> b c d', [self.mask, v])
 
-#         return self.squash(out)
+    def forward(self, x):
+        # Learnable weight generate
+        B = x.shape[0]
+        assi = x.permute(0,2,1)
+        assi = assi.reshape(B,1024,14,14)
+        assi = self.assi(assi)
+        assi = self.upsam(assi)
+        num = self.squash_s(assi.reshape(B,1024,196))
+        num = torch.norm(num,dim=1)
+        num = num.unsqueeze(-1).unsqueeze(1)
 
+        v = self.v(x)
+        v = self.squash_primary(v) 
+        out = torch.mul(v, num)
+
+        out = torch.einsum('c c a, b c a n -> b c n', [self.mask, out])
+        out = self.squash_secondary(out)
+        return out
+
+class ATR_QDR(nn.Module):
+
+    def __init__(self, num, in_c, in_dim, out_dim, dis_dim, learnable):
+        super().__init__()
+
+        self.in_c = in_c
+        self.squash_primary = Squash(learnable=True)
+        self.squash_secondary = Squash(learnable=True)
+        self.v = Affines(in_dim=in_dim, out_dim=out_dim, in_c=in_c)
+        self.num = nn.Conv2d(2048, 120, 1, stride=1, padding=0)
+        self.bssi = nn.Conv2d(2048, 2048, 1, stride=1, padding=0)
+        self.sq = Squash(learnable=True)
+        self.mask = nn.Parameter(F.softmax(torch.ones(num, num, self.in_c), dim=0), requires_grad=False)
+
+    def forward(self, x):
+        v = self.v(x)  
+        v = self.squash_primary(v)
+
+        rout2 = self.bssi(v.unsqueeze(-1))
+        rout2 = rout2.squeeze(-1)
+        rout2 = nn.ReLU()(rout2)
+        rout2 = F.softmax(rout2 ,dim=1)
+
+        
+#if the type of dataset is synthetic
+        #outd = self.num(v.unsqueeze(dim=-1))
+        #outd = self.sq(outd.squeeze(dim=-1))
+        
+        out = torch.einsum('b c n, b n d -> b c d',[ rout2.permute(0,2,1), v ])
+        out = self.squash_secondary(out)
+        return out
 
 class ATRMixer(nn.Module):
     """
@@ -133,12 +209,12 @@ class ATRMixer(nn.Module):
 
         self.atr_lr = nn.Sequential(
             Rearrange('b c h w -> b (h w) c'),
-            ATR(num=num, in_c=spatial_in_c, in_dim=spatial_in_dim, num_c=num_c,out_dim=spatial_out_dim, learnable=learnable)
+            ATR_QLR(num=num, in_c=spatial_in_c, in_dim=spatial_in_dim, num_c=num_c,out_dim=spatial_out_dim, learnable=learnable)
         )
 
         self.atr_dr = nn.Sequential(
             Rearrange('b c h w -> b c (h w)'),
-            ATR(num=num, in_c=feature_in_c, in_dim=feature_in_dim, out_dim=feature_out_dim, learnable=learnable)
+            ATR_QDR(num=num, in_c=feature_in_c, in_dim=feature_in_dim, out_dim=feature_out_dim, learnable=learnable)
         )
         self.squash_final = Squash(learnable=False)
         self.fc1 = nn.Linear(16, 1)
