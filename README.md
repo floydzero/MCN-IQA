@@ -1,5 +1,5 @@
 # MCN
-This is the code for the paper A Mixture Capsule Network Towards Interpretable Blind Image Quality Assessment.
+This is the code for the paper submitted to TCSVT (A Mixture Capsule Network Towards Interpretable Blind Image Quality Assessment).
 ### Operating Environments
 #### Hardware Environment
 Our code is running on a server with GeForce RTX 3090 GPUs and a CPU model Intel(R) Core(TM) i7-9800X @ 3.80GHz. The batchsize of a single graphics card is set to 64, which can be increased as the number of graphics cards increases.
