@@ -20,7 +20,6 @@ def main():
     # dataset = "LIVE"
     # dataset = 'TID2013'
     # dataset = 'KADID-10K'
-    # dataset = 'PaQ2PaQ'
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s',
                         filename='/home/long/IQA/MixerCaps/log/logfile/param_%s_%s.log' % (cfg.LOGFILE.NAME, dataset))
     logging.info("FIX: %s" % cfg.LOGFILE.CAPTION)
@@ -31,8 +30,6 @@ def main():
             idx = list(range(0, 10073))
         if dataset == 'LIVEC':
             idx = list(range(0, 1162))
-        if dataset == 'PaQ2PaQ':
-            idx = list(range(0, 39807))
         if dataset == 'LIVE':
             idx = list(range(0, 29))
         if dataset == 'TID2013':
